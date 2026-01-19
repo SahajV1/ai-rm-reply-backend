@@ -63,7 +63,10 @@ The reply intent is "callback".
 `;
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.0-pro" });
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash"
+    });
+    
 
     const prompt = `
 You are a customer support assistant for Fitelo, a health and wellness company.
