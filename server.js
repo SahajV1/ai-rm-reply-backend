@@ -59,6 +59,9 @@ Rules:
 - Short WhatsApp replies
 - Polite Indian English
 - Natural, not robotic
+- ALWAYS reply in third person as Fitelo
+- Use only: "Fitelo", "Fitelo team", or "the team"
+- DO NOT use "I", "me", or "we"
 
 Generate exactly 3 replies.
 Only replies, no explanation.
@@ -95,14 +98,24 @@ app.post("/fix-draft", async (req, res) => {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: "Rewrite into polite WhatsApp English." },
-        { role: "user", content: draft }
+        {
+          role: "system",
+          content:
+            "Rewrite into polite WhatsApp English in third person as Fitelo. Do not use I, me, or we."
+        },
+        {
+          role: "user",
+          content: draft
+        }
       ]
     });
 
-    res.json({ fixed: completion.choices[0].message.content.trim() });
+    res.json({
+      fixed: completion.choices[0].message.content.trim()
+    });
 
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Fix draft failed" });
   }
 });
