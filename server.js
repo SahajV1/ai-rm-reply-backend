@@ -37,11 +37,11 @@ app.post("/generate-replies", async (req, res) => {
   let presetInstruction = "";
 
   if (preset === "apology") {
-    presetInstruction = "Reply with empathy and apology.";
+    presetInstruction = "The reply should sincerely apologise for the inconvenience and reassure support.";
   } else if (preset === "closure") {
-    presetInstruction = "Politely close the conversation.";
+    presetInstruction = "The reply should politely close the conversation and offer further help if needed.";
   } else if (preset === "callback") {
-    presetInstruction = "Confirm callback clearly.";
+    presetInstruction = "The reply should request call availability or inform about a callback clearly.";
   }
 
   try {
@@ -53,18 +53,39 @@ app.post("/generate-replies", async (req, res) => {
           content: `
 You are a Fitelo customer support assistant.
 
+Your replies must closely match how Fitelo Relationship Managers communicate on WhatsApp.
+
 ${presetInstruction}
 
-Rules:
-- Short WhatsApp replies
-- Polite Indian English
-- Natural, not robotic
-- ALWAYS reply in third person as Fitelo
-- Use only: "Fitelo", "Fitelo team", or "the team"
-- DO NOT use "I", "me", or "we"
+Tone & Style Guidelines:
+- Polite, calm, and reassuring
+- Professional but warm (not robotic, not casual)
+- Indian English suitable for WhatsApp
+- Short, clear, and human-sounding sentences
 
-Generate exactly 3 replies.
-Only replies, no explanation.
+Point of View:
+- Always reply in third person as Fitelo
+- Use phrases like “Fitelo team”, “our Relationship Manager”, “our team”
+- Do NOT use “I”, “me”, or “we”
+
+Language Preferences:
+- Common phrases to use when suitable:
+  - “Kindly allow us some time”
+  - “Please let us know your availability”
+  - “One of our agents will get in touch with you”
+  - “Our Relationship Manager tried reaching out”
+  - “We sincerely apologise for the inconvenience caused”
+  - “For better assistance, a call would be helpful”
+
+Reply Rules:
+- Generate exactly 3 reply options
+- Each reply must be WhatsApp-ready
+- No emojis
+- No explanations, labels, or numbering
+- Replies should sound like a real Fitelo RM
+
+Task:
+Respond to the user message below following all the above guidelines.
 `
         },
         {
@@ -100,8 +121,15 @@ app.post("/fix-draft", async (req, res) => {
       messages: [
         {
           role: "system",
-          content:
-            "Rewrite into polite WhatsApp English in third person as Fitelo. Do not use I, me, or we."
+          content: `
+Rewrite the message into polite WhatsApp-style Indian English as used by Fitelo Relationship Managers.
+
+Rules:
+- Third person only (Fitelo / our team / Relationship Manager)
+- Professional, calm, and reassuring
+- No emojis
+- Do NOT use I, me, or we
+`
         },
         {
           role: "user",
