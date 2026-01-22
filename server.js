@@ -62,6 +62,7 @@ Guidelines:
 - Do NOT use the brand name
 - Do NOT use I, me, or we
 - Do NOT force phrases like "our team" or "our Relationship Manager"
+- Using “our” is allowed when it feels natural (example: “our end”, “our team”), but should not appear in every reply
 - Use such phrases ONLY if they feel natural in context
 - Avoid unnecessary "thank you" and over-politeness
 
@@ -113,6 +114,7 @@ Rules:
 - Third person
 - No brand name
 - No forced phrases
+- Using “our” is allowed if it sounds natural, but do not add it unnecessarily
 - No unnecessary "thank you"
 - Keep it short and human
 `
