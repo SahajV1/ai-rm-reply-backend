@@ -4,7 +4,6 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import OpenAI from "openai";
 
 dotenv.config();
 
@@ -16,14 +15,36 @@ app.use(cors());
 app.use(express.json());
 
 // ==========================
-// 3. Grok (xAI) Client
+// 3. Hugging Face Config
 // ==========================
-const client = new OpenAI({
-  apiKey: process.env.XAI_API_KEY,
-  baseURL: "https://api.x.ai/v1"
-});
+const HF_MODEL = "mistralai/Mistral-7B-Instruct";
+const HF_API_URL = `https://api-inference.huggingface.co/models/${HF_MODEL}`;
 
-const MODEL = "grok-2-latest";
+async function queryHF(prompt) {
+  const response = await fetch(HF_API_URL, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${process.env.HF_API_KEY}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      inputs: prompt,
+      parameters: {
+        max_new_tokens: 120,
+        temperature: 0.3,
+        return_full_text: false
+      }
+    })
+  });
+
+  const data = await response.json();
+
+  if (data.error) {
+    throw new Error(data.error);
+  }
+
+  return data[0]?.generated_text?.trim();
+}
 
 // ==========================
 // 4. Routes
@@ -38,57 +59,40 @@ app.post("/generate-replies", async (req, res) => {
   }
 
   let presetInstruction = "";
-  if (preset === "apology") {
-    presetInstruction = "Apologise sincerely and reassure support.";
-  } else if (preset === "closure") {
-    presetInstruction = "Politely close the conversation if appropriate.";
-  } else if (preset === "callback") {
-    presetInstruction = "Request call availability or inform about a callback.";
-  }
+  if (preset === "apology") presetInstruction = "Apologise sincerely.";
+  if (preset === "closure") presetInstruction = "Politely close the conversation.";
+  if (preset === "callback") presetInstruction = "Ask for callback availability.";
 
-  try {
-    const completion = await client.chat.completions.create({
-      model: MODEL,
-      messages: [
-        {
-          role: "system",
-          content: `
+  const prompt = `
 You are a human customer support executive replying on WhatsApp.
+
 ${presetInstruction}
 
-Guidelines:
-- Polite, calm Indian English
-- Short, natural, human-sounding replies
+Rules:
+- Polite Indian English
 - Third person only
-- Do NOT use the brand name
-- Do NOT use I, me, or we
-- Do NOT force phrases like "our team" or "our Relationship Manager"
-- Using "our" is allowed when it feels natural
-- Avoid unnecessary "thank you" and over-politeness
-
-Reply rules:
-- Generate exactly 3 replies
-- WhatsApp-ready
+- No brand name
 - No emojis
-- No explanations or numbering
-`
-        },
-        {
-          role: "user",
-          content: message
-        }
-      ],
-      temperature: 0.3
-    });
+- Generate exactly 3 short replies
+- Each reply on a new line
 
-    const replies = completion.choices[0].message.content
+Customer message:
+"${message}"
+`;
+
+  try {
+    const text = await queryHF(prompt);
+
+    const replies = text
       .split("\n")
-      .filter(Boolean);
+      .map(r => r.trim())
+      .filter(Boolean)
+      .slice(0, 3);
 
     res.json({ replies });
 
   } catch (err) {
-    console.error("Grok error:", err);
+    console.error("HF error:", err.message);
     res.status(500).json({ error: "AI generation failed" });
   }
 });
@@ -101,38 +105,25 @@ app.post("/fix-draft", async (req, res) => {
     return res.status(400).json({ error: "Draft required" });
   }
 
-  try {
-    const completion = await client.chat.completions.create({
-      model: MODEL,
-      messages: [
-        {
-          role: "system",
-          content: `
-Rewrite this into natural WhatsApp-style Indian English.
+  const prompt = `
+Rewrite the following message into natural WhatsApp-style Indian English.
 
 Rules:
 - Third person
 - No brand name
-- No forced phrases
-- Using "our" is allowed only if it sounds natural
-- No unnecessary "thank you"
+- No unnecessary politeness
 - Keep it short and human
-`
-        },
-        {
-          role: "user",
-          content: draft
-        }
-      ],
-      temperature: 0.25
-    });
 
-    res.json({
-      fixed: completion.choices[0].message.content.trim()
-    });
+Message:
+"${draft}"
+`;
+
+  try {
+    const fixed = await queryHF(prompt);
+    res.json({ fixed });
 
   } catch (err) {
-    console.error("Grok error:", err);
+    console.error("HF error:", err.message);
     res.status(500).json({ error: "Fix draft failed" });
   }
 });
@@ -144,5 +135,5 @@ const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
   console.log(`✅ Backend running on port ${PORT}`);
-  console.log(`🤖 Using Grok model: ${MODEL}`);
+  console.log(`🤖 Using Hugging Face model: ${HF_MODEL}`);
 });
