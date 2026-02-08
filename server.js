@@ -14,17 +14,18 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+
 // ==========================
 // 3. Hugging Face Config
 // ==========================
-const HF_MODEL = "mistralai/Mistral-7B-Instruct";
-const HF_API_URL = `https://api-inference.huggingface.co/models/${HF_MODEL}`;
+const HF_MODEL = "mistralai/Mistral-7B-Instruct-v0.3";
+const HF_API_URL = `https://router.huggingface.co/hf-inference/models/${HF_MODEL}`;
 
 async function queryHF(prompt) {
   const response = await fetch(HF_API_URL, {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${process.env.HF_API_KEY}`,
+      Authorization: `Bearer ${process.env.HF_API_KEY}`,
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
@@ -45,6 +46,7 @@ async function queryHF(prompt) {
 
   return data[0]?.generated_text?.trim();
 }
+
 
 // ==========================
 // 4. Routes
