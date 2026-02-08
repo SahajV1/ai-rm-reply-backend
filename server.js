@@ -19,7 +19,7 @@ app.use(express.json());
 // 3. Hugging Face Config
 // ==========================
 const HF_MODEL = "mistralai/Mistral-7B-Instruct-v0.3";
-const HF_API_URL = `https://router.huggingface.co/hf-inference/models/${HF_MODEL}`;
+const HF_API_URL = `https://router.huggingface.co/models/${HF_MODEL}`;
 
 async function queryHF(prompt) {
   const response = await fetch(HF_API_URL, {
@@ -38,7 +38,15 @@ async function queryHF(prompt) {
     })
   });
 
-  const data = await response.json();
+  // 🔐 Important safety check
+  const text = await response.text();
+
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (e) {
+    throw new Error(`HF non-JSON response: ${text}`);
+  }
 
   if (data.error) {
     throw new Error(data.error);
